@@ -1,0 +1,39 @@
+{
+	"name": "transmission-sim.js",
+	"version": "0.0.1",
+	"main": "figtree.js",
+	"keywords": [
+		"virus evolution",
+		"transmission",
+		"epidemiology"
+	],
+	"ignore": [],
+	"dependencies": {
+		"font-awesome": "4.x",
+		"sphinx": "^0.1.2"
+	},
+	"devDependencies": {
+		"babel-cli": "^6.26.0",
+		"babel-core": "^6.26.0",
+		"babel-eslint": "^8.0.3",
+		"babel-istanbul": "^0.12.2",
+		"babel-loader": "^7.1.2",
+		"babel-plugin-add-module-exports": "^0.2.1",
+		"babel-preset-env": "^1.6.1",
+		"babel-register": "^6.26.0",
+		"chai": "^4.1.2",
+		"eslint": "^4.13.1",
+		"eslint-loader": "^1.9.0",
+		"mocha": "^4.0.1",
+		"webpack": "^3.10.0",
+		"yargs": "^10.0.3"
+	},
+	"scripts": {
+		"docs": "sphinx-build -b html docs documentation",
+		"build": "WEBPACK_ENV=build webpack",
+		"dev": "WEBPACK_ENV=dev webpack --progress --colors --watch",
+		"test": "mocha --require babel-register --require babel-polyfill --colors ./test/*.spec.js",
+		"compile": "babel src --out-dir .compiled --source-maps --watch --require babel-polyfill"
+	},
+	"license": "MIT"
+}
