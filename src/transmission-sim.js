@@ -1,41 +1,6 @@
 /** @module transmission-sim */
 
 /**
- * The case class. this represent a single
- */
-export class Case {
-  /**
-	 * The constructor takes a parent case containing probability distribution for infectivity over time, and a distribution from which to draw the
-	 * number of subsequent infections, and the time of symptom onset.
-	 *
-	 * @constructor
-	 * @param {object} params - The parameters governing the outbreak. These are curried functions that return a random sample from a distribution {infectivity:,R0:,onset:}
-	 */
-  constructor(onset = 0, donorCase = {}, level = 0) {
-    this.parent = donorCase;
-    this.children = [];
-    this.level = level;
-    this.onset = onset;
-  }
-  /**
-	 * Returns transmitted cases from a donor case
-	 * the node as poperty 'key'.
-	 *
-	 * @param key
-	 * @returns {*}
-	 */
-  transmit(epiParameters) {
-    // How many transmissions with this case have
-    const numberOftransmissions = epiParameters.R0();
-
-    for (let i = 0; i < numberOftransmissions; i++) {
-      const child = new Case(this.onset + epiParameters.infectivity(), this, this.level + 1);
-
-      this.children.push(child);
-    }
-  }
-}
-/**
  * The Outbreak class. Currently the rate of transmission is constant but it could be adjusted in
  * the future. That'd be nice.
  */
@@ -47,14 +12,18 @@ export class Outbreak {
 	 * number of subsequent infections.
 	 *
 	 * @constructor
-	 * @param {object} params - The parameters governing the outbreak. These are curried functions that wait for an x value, and are keyed as {infectivityCDF:,R0cdf:}
+	 * @param {object} params - The parameters governing the outbreak.
+	 * These are curried functions that wait for an x value, and are keyed as {infectivityCDF:,R0cdf:}
 	 */
-  constructor(params = {}, indexCase = new Case()) {
+  constructor(params = {}) {
     this.epiParams = params;
-    this.index = indexCase;
+    this.index = {
+      onset: 0,
+      level: 0
+    };
     this.caseList = [...this.preorder()];
-    // this.caseList.forEach((case, index) => (case.key = Symbol.for(`case ${index}`)));
-    // this.caseMap = new Map(this.caseList.map(case => [case.key, case]));
+    this.caseList.forEach((n, index) => (n.key = Symbol.for(`case ${index}`)));
+    this.caseMap = new Map(this.caseList.map(node => [node.key, node]));
   }
   /**
 	 * Gets the index case node of the outbreak
@@ -109,7 +78,7 @@ export class Outbreak {
   * preorder() {
     const traverse = function * (node) {
       yield node;
-      if (node.children.length > 0) {
+      if (node.children) {
         for (const child of node.children) {
           yield* traverse(child);
         }
@@ -128,8 +97,33 @@ export class Outbreak {
 	 * @returns {*}
 	 */
   get externalCases() {
-    return this.cases.filter(node => node.children.length === 0);
+    return this.cases.filter(node => node.children);
   }
+  /**
+	 * Returns transmitted cases from a donor case
+	 *
+	 * @param donor - the donor case, epiParameters - object keyed with R0 and infectivity
+	 * where each entry is a function which returns a sample from a distribution.
+	 * @returns adds children to donor case if transmission occurs
+	 */
+  transmit(donor, epiParameters) {
+    // How many transmissions with this case have
+    const numberOftransmissions = epiParameters.R0();
+
+    if (numberOftransmissions > 0) {
+      donor.children = [];
+    }
+    for (let i = 0; i < numberOftransmissions; i++) {
+      const child = {
+        parent: donor,
+        level: donor.level + 1,
+        onset: donor.onset + epiParameters.infectivity()
+      };
+
+      donor.children.push(child);
+    }
+  }
+
   /**
 	 * A function that calls a transmission call on all nodes until the desired number of levels is added
 	 * to the outbreak. It starts at the most recent level.
@@ -142,7 +136,7 @@ export class Outbreak {
       const possibleDonors = this.cases.filter(x => x.level === maxLevel);
 
       for (const donor of possibleDonors) {
-        donor.transmit(this.epiParams);
+        this.transmit(donor, this.epiParams);
       }
       this.caseList = [...this.preorder()];
     }
