@@ -17,7 +17,7 @@ if (env === 'build') {
 }
 
 const config = {
-  entry: __dirname + '/src/Outbreak.mjs',
+  entry: __dirname + '/src/transmission-sim.js',
   devtool: 'source-map',
   output: {
     path: __dirname + '/lib',
