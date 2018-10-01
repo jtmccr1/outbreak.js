@@ -125,20 +125,27 @@ export class Outbreak {
   }
 
   /**
-	 * A function that calls a transmission call on all nodes until the desired number of levels is added
+	 * A function that calls a transmission call on all nodes until the desired number of days have passed
 	 * to the outbreak. It starts at the most recent level.
 	 * @param levels - the number of levels to add to the growing transmission chain.
 	 */
-  spread(levels) {
-    for (let i = 0; i < levels; i++) {
-      const maxLevel = this.cases.map(node => node.level).reduce((max, cur) => Math.max(max, cur), -Infinity);
+  spread(days) {
+    let currentTime = this.cases.map(node => node.onset).reduce((max, cur) => Math.max(max, cur), -Infinity);
+    let currentLevel = this.cases.map(node => node.level).reduce((max, cur) => Math.max(max, cur), -Infinity);
+    const targetTime = currentTime + days;
 
-      const possibleDonors = this.cases.filter(x => x.level === maxLevel);
+    while (currentTime < targetTime) {
+      // each node only gets one chance to transmit. Get those elible.
+
+      const possibleDonors = this.cases.filter(x => x.level === currentLevel);
 
       for (const donor of possibleDonors) {
         this.transmit(donor, this.epiParams);
       }
       this.caseList = [...this.preorder()];
+      currentLevel = +1;
     }
+    // remove cases that happen after the provided date. They will stay as children nodes.
+    this.caseList = this.caseList.filter(c => c.onset < targetTime);
   }
 }
