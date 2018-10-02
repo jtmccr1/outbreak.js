@@ -139,6 +139,9 @@ export class Outbreak {
 
       const possibleDonors = this.cases.filter(x => x.level === currentLevel);
 
+      if (possibleDonors.length === 0) {
+        break;
+      }
       for (const donor of possibleDonors) {
         this.transmit(donor, this.epiParams);
       }
